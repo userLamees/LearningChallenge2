@@ -6,18 +6,12 @@
 //
 
 import SwiftUI
-import Foundation // لإصلاح أخطاء التاريخ (اختياري، لكن آمن)
-
-// 🌟 هذا الملف هو View (واجهة المستخدم) 🌟
-
+internal import Combine
 struct ContentView: View {
     
-    // 🌟 1. ربط الـ View بالـ ViewModel 🌟
     @StateObject private var viewModel = ContentViewModel()
-    
     @FocusState private var foucsed: Bool
     
-    // تعريف الألوان المستخدمة (تبقى في الـ View للتصميم)
     let primaryColor = Color("StreakColor")
     let unselectedDarkColor = Color(red: 0.1, green: 0.1, blue: 0.1)
     
@@ -29,12 +23,11 @@ struct ContentView: View {
                 Color("BackgoundColor").edgesIgnoringSafeArea(.all)
                     .preferredColorScheme(.dark)
                 
-                VStack(alignment: .center, spacing: 30) {
+                VStack(alignment: .center, spacing: 10) {
                     
-                    // === A. منطقة الشعار ===
                     ZStack {
                         Circle()
-                            .fill(Color(red: 0.1, green: 0.1, blue: 0.1))
+                            .fill(unselectedDarkColor)
                             .frame(width: 109, height: 109).shadow(color: Color.orange.opacity(0.7), radius: 15).glassEffect()
                             .opacity(0.6)
                         
@@ -61,7 +54,6 @@ struct ContentView: View {
                             
                             Text("I want to learn").font(.system(size: 25))
                             
-                            // 🌟 الربط بـ viewModel.subjectToLearn 🌟
                             TextField("Swift", text: $viewModel.subjectToLearn)
                                 .foregroundColor(.white)
                                 .onSubmit {
@@ -101,7 +93,6 @@ struct ContentView: View {
                             .buttonStyle(.glass)
                             .background(
                                 RoundedRectangle(cornerRadius: 20)
-                                // 🌟 عرض الحالة من ViewModel 🌟
                                     .fill(duration == viewModel.selectedDuration ? primaryColor : unselectedDarkColor)
                                     .shadow(color: Color.black.opacity(0.5), radius: 5, x: 0, y: 3)
                             )
@@ -112,19 +103,21 @@ struct ContentView: View {
                     }
                     
                     
-                   
                     HStack {
                         Spacer()
                         
-                        NavigationLink(destination: MainPageView()) {
-                            Text("Start learning")
+                        NavigationLink(destination: MainPageView(viewModel:
+                            MainPageViewModel(subject: viewModel.subjectToLearn,
+                            duration: viewModel.selectedDuration))) {
+                            Text("Start Learning!")
                                 .foregroundColor(.white)
                                 .padding(.vertical, 15)
-                                .frame(width: 200)
-                                .background(primaryColor)
+                                .frame(width: 180)
+                                .background(Color.orange.opacity(0.7))
                                 .clipShape(RoundedRectangle(cornerRadius: 60))
                         }
-                        .buttonStyle(.plain)    .padding(.top, 50)
+                        .buttonStyle(.glass)
+                        .padding(.top, 150)
                         
                         Spacer()
                     }
@@ -133,8 +126,8 @@ struct ContentView: View {
                 .padding(.bottom, 100)
                 .padding(.horizontal, 25)
             }
-            .navigationBarHidden(true)
-        }
+            .navigationBarHidden(true) // هذا المُعدِّل أصبح مُهملاً (Deprecated)
+            .toolbar(.hidden, for: .navigationBar)        }
     }
 }
 

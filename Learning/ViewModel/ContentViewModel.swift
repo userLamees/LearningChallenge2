@@ -5,25 +5,26 @@
 //  Created by lamess on 01/05/1447 AH.
 //
 
-import SwiftUI
-import Combine
+// ContentViewModel.swift
+import Foundation
+internal import Combine
 
-// تعريف المدة الزمنية للتعلم (يجب أن يكون هنا ليكون متاحاً للكل)
-public enum LearningDuration: String, CaseIterable, Codable {
-    case week = "Week"
-    case month = "Month"
-    case year = "Year"
-}
-
-public class ContentViewModel: ObservableObject {
+// تأكد أن هذا class
+class ContentViewModel: ObservableObject {
     
-    // البيانات التي تراقبها الواجهة
+    // ⬇️ الآن سيعمل بشكل سليم بعد تعريف LearningDuration
     @Published var subjectToLearn: String = ""
+    
+    // ⬇️ لا يوجد خطأ Initializer هنا لأننا وضعنا قيمة افتراضية (.week)
     @Published var selectedDuration: LearningDuration = .week
     
-    // دالة لتنفيذ منطق عند الضغط على زر "Start learning"
-    public func startLearning() {
-        // يمكنك هنا حفظ البيانات في Firebase أو طباعتها
-        print("Starting learning: \(subjectToLearn) for \(selectedDuration.rawValue)")
+    // **B. المنطق (Business Logic)**
+    func startLearning() {
+        let subject = subjectToLearn
+        let duration = selectedDuration
+        
+        // ... (منطق البدء)
+        
+        print("Starting learning: \(subject) for \(duration.rawValue)")
     }
 }
