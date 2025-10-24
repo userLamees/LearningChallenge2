@@ -7,6 +7,11 @@
 
 // LearningStatus.swift (Model)
 import Foundation
+enum LogType {
+    case learned
+    case freezed
+    case none // لم يتم تسجيله بعد
+}
 struct LearningStatus {
     // تأكد من وجود هذه الخصائص جميعاً
     var subject: String
@@ -16,4 +21,6 @@ struct LearningStatus {
     var freezesUsed: Int = 0
     var lastInteractionDate: Date?
     var wasLastInteractionFreeze: Bool = false
+    var loggedStatus: [Date: LogType] = [:]
+    
 }

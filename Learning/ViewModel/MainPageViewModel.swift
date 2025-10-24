@@ -61,22 +61,25 @@ class MainPageViewModel: ObservableObject {
         }
         return Calendar.current.isDateInToday(lastDate)
     }
+    var selectedDateStatus: LogType {
+            let dayStart = calendar.startOfDay(for: selectedDate)
+            return currentStatus.loggedStatus.first { calendar.isDate($0.key, inSameDayAs: dayStart) }?.value ?? .none
+        }
 
     // تحديث حالة زر "تعلم"
     var isLearnButtonEnabled: Bool {
         // 1. يجب ألا يكون قد تم التفاعل اليوم
-        guard !hasInteractedToday else { return false }
-        
+        guard selectedDateStatus == .none else { return false }
         // 2. يجب أن تكون الأيام المتعلمة أقل من إجمالي المدة
         let totalDays: Int = currentStatus.duration == .week ? 7 : (currentStatus.duration == .month ? 30 : 365)
         return currentStatus.daysLearned < totalDays
+        
     }
     
     // تحديث حالة زر "تجميد"
     var isFreezeButtonEnabled: Bool {
         // 1. يجب ألا يكون قد تم التفاعل اليوم
-        guard !hasInteractedToday else { return false }
-        
+        guard selectedDateStatus == .none else { return false }
         // 2. يجب أن يكون هناك رصيد تجميد متبقي
         return freezesRemaining > 0
     }
@@ -87,8 +90,8 @@ class MainPageViewModel: ObservableObject {
         
         currentStatus.daysLearned += 1
         currentStatus.lastInteractionDate = Date() // تسجيل تاريخ التفاعل
-        currentStatus.wasLastInteractionFreeze = false
-        print("Logged as Learned. Total days: \(currentStatus.daysLearned)")
+        currentStatus.loggedStatus[calendar.startOfDay(for: selectedDate)] = .learned
+        print("Logged as Learned for date: \(selectedDate). Total days: \(currentStatus.daysLearned)")
     }
 
     // تعديل دالة logAsFreezed
@@ -98,7 +101,7 @@ class MainPageViewModel: ObservableObject {
         currentStatus.freezesUsed += 1
         currentStatus.daysFreezed += 1
         currentStatus.lastInteractionDate = Date() // تسجيل تاريخ التفاعل
-        currentStatus.wasLastInteractionFreeze = true
-        print("Logged as Freezed. Freezes left: \(freezesRemaining)")
+        currentStatus.loggedStatus[calendar.startOfDay(for: selectedDate)] = .freezed
+        print("Logged as Freezed for date: \(selectedDate). Freezes left: \(freezesRemaining)")
     }
 }

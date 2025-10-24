@@ -6,13 +6,14 @@
 //
 
 import SwiftUI
-internal import Combine
+import Foundation // مطلوب لـ ContentViewModel
+
 struct ContentView: View {
     
     @StateObject private var viewModel = ContentViewModel()
-    @FocusState private var foucsed: Bool
+    @FocusState private var focused: Bool
     
-    let primaryColor = Color("StreakColor")
+    let primaryColor = Color.orange // استخدمنا لون ثابت بدلاً من "StreakColor"
     let unselectedDarkColor = Color(red: 0.1, green: 0.1, blue: 0.1)
     
     var body: some View {
@@ -20,15 +21,17 @@ struct ContentView: View {
         NavigationStack {
             
             ZStack {
-                Color("BackgoundColor").edgesIgnoringSafeArea(.all)
+                Color.black.edgesIgnoringSafeArea(.all)
                     .preferredColorScheme(.dark)
                 
                 VStack(alignment: .center, spacing: 10) {
                     
+                    // ... (الجزء A: الأيقونة)
                     ZStack {
                         Circle()
                             .fill(unselectedDarkColor)
-                            .frame(width: 109, height: 109).shadow(color: Color.orange.opacity(0.7), radius: 15).glassEffect()
+                            .frame(width: 109, height: 109)
+                            .shadow(color: Color.orange.opacity(0.7), radius: 15)
                             .opacity(0.6)
                         
                         Image(systemName: "flame.fill")
@@ -39,95 +42,76 @@ struct ContentView: View {
                     }
                     .padding(.vertical, 40)
                     
-                    // === B. النصوص وحقل الإدخال (محاذاة لليسار) ===
+                    // ... (الجزء B: النصوص وحقل الإدخال)
                     HStack {
                         VStack(alignment: .leading, spacing: 15) {
-                            Text("Hello Learner")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
+                            Text("Hello Learner").font(.largeTitle).fontWeight(.bold).foregroundColor(.white)
                             
-                            Text("This app will help you learn everyday!")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                                .padding(.bottom, 25)
+                            Text("This app will help you learn everyday!").font(.subheadline).foregroundColor(.gray).padding(.bottom, 25)
                             
-                            Text("I want to learn").font(.system(size: 25))
+                            Text("I want to learn").font(.system(size: 25)).foregroundColor(.white)
                             
                             TextField("Swift", text: $viewModel.subjectToLearn)
                                 .foregroundColor(.white)
-                                .onSubmit {
-                                    viewModel.startLearning() // استدعاء دالة المنطق
-                                }
-                                .focused($foucsed)
+                                .onSubmit { viewModel.startLearning() }
+                                .focused($focused)
                             
-                            Rectangle()
-                                .frame(height: 1)
-                                .foregroundColor(.gray.opacity(0.5))
-                                .padding(.bottom, 10)
+                            Rectangle().frame(height: 1).foregroundColor(.gray.opacity(0.5)).padding(.bottom, 10)
                             
-                            Text("I want to learn in a ")
-                                .foregroundColor(.gray)
-                                .font(.system(size: 25))
+                            Text("I want to learn in a ").foregroundColor(.gray).font(.system(size: 25))
                             
-                        }.onAppear{foucsed = true}
+                        }.onAppear{focused = true}
                         
-                        Spacer() // يدفع النصوص لليسار
+                        Spacer()
                     }
                     
-                    // === C. أزرار المدة ===
+                    // ... (الجزء C: أزرار المدة)
                     HStack(spacing: 10) {
-                        
                         ForEach(LearningDuration.allCases, id: \.self) { duration in
                             Button {
-                                // 🌟 التفاعل يمر عبر ViewModel 🌟
                                 viewModel.selectedDuration = duration
                             } label: {
                                 Text(duration.rawValue)
-                                    .font(.headline)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.white)
-                                    .padding(.vertical, 6)
-                                    .padding(.horizontal, 15)
+                                    .font(.headline).fontWeight(.medium).foregroundColor(.white)
+                                    .padding(.vertical, 6).padding(.horizontal, 15)
                             }
-                            .buttonStyle(.glass)
                             .background(
-                                RoundedRectangle(cornerRadius: 20)
+                                RoundedRectangle(cornerRadius: 40)
                                     .fill(duration == viewModel.selectedDuration ? primaryColor : unselectedDarkColor)
                                     .shadow(color: Color.black.opacity(0.5), radius: 5, x: 0, y: 3)
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 40))
+                            ).buttonStyle(.glass)
                         }
-                        
                         Spacer()
                     }
                     
-                    
+                    // ... (الجزء D: زر "Start Learning!")
                     HStack {
                         Spacer()
                         
-                        NavigationLink(destination: MainPageView(viewModel:
-                            MainPageViewModel(subject: viewModel.subjectToLearn,
-                            duration: viewModel.selectedDuration))) {
+                        // 🚨 الحل: تمرير البيانات مباشرة إلى init() الجديد لـ MainPageView 🚨
+                        NavigationLink(destination:
+                            MainPageView(
+                                subject: viewModel.subjectToLearn,
+                                duration: viewModel.selectedDuration
+                            )
+                        ) {
                             Text("Start Learning!")
                                 .foregroundColor(.white)
                                 .padding(.vertical, 15)
                                 .frame(width: 180)
                                 .background(Color.orange.opacity(0.7))
                                 .clipShape(RoundedRectangle(cornerRadius: 60))
-                        }
-                        .buttonStyle(.glass)
+                        }.buttonStyle(.glass)
                         .padding(.top, 150)
                         
                         Spacer()
                     }
-                    
                 }
                 .padding(.bottom, 100)
                 .padding(.horizontal, 25)
             }
-            .navigationBarHidden(true) // هذا المُعدِّل أصبح مُهملاً (Deprecated)
-            .toolbar(.hidden, for: .navigationBar)        }
+            .toolbar(.hidden, for: .navigationBar)
+        }
     }
 }
 
