@@ -12,13 +12,20 @@ internal import Combine
 // تأكد أن هذا class
 class ContentViewModel: ObservableObject {
     
-    // ⬇️ الآن سيعمل بشكل سليم بعد تعريف LearningDuration
     @Published var subjectToLearn: String = ""
-    
-    // ⬇️ لا يوجد خطأ Initializer هنا لأننا وضعنا قيمة افتراضية (.week)
     @Published var selectedDuration: LearningDuration = .week
     
-    // **B. المنطق (Business Logic)**
+    init(initialSubject: String, initialDuration: LearningDuration) {
+            // يجب تعيين القيم الابتدائية (مهم جداً!)
+            self._subjectToLearn = Published(initialValue: initialSubject)
+            self._selectedDuration = Published(initialValue: initialDuration)
+            
+        }
+        
+        init() {
+            self._subjectToLearn = Published(initialValue: "Swift")
+            self._selectedDuration = Published(initialValue: .week)
+        }
     func startLearning() {
         let subject = subjectToLearn
         let duration = selectedDuration

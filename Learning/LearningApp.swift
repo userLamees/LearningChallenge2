@@ -11,7 +11,10 @@ import SwiftUI
 struct LearningApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            GoalManagementView(
+                            initialSubject: "Swift",
+                            initialDuration: .week
+                        )
         }
     }
 }

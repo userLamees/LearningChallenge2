@@ -15,93 +15,150 @@ class MainPageViewModel: ObservableObject {
     @Published var currentStatus: LearningStatus
     @Published var currentWeek: [Date] = []
     @Published var selectedDate: Date = Date()
+    @Published var isGoalCompleted: Bool = false
     
-    private let calendar = Calendar.current
-
+    @Published var calendar: Calendar = .current
+    
     init(subject: String, duration: LearningDuration) {
-        // يجب أن يعمل هذا بعد تصحيح LearningStatus
         self.currentStatus = LearningStatus(subject: subject, duration: duration)
         self.currentWeek = []
         self.selectedDate = Date()
         updateWeek(for: Date())
     }
-
+    
+    func updateGoal(newSubject: String, newDuration: LearningDuration) {
+        // 1. تحديث الموضوع والمدة في الحالة الحالية
+        currentStatus.subject = newSubject
+        currentStatus.duration = newDuration
+        currentStatus.daysLearned = 0
+        currentStatus.daysFreezed = 0
+        
+    }
+    
+    func selectedDateStatus(for date: Date) -> LogType {
+        let dayStart = calendar.startOfDay(for: date)
+        
+        return currentStatus.loggedStatus.first { calendar.isDate($0.key, inSameDayAs: dayStart) }?.value ?? .none
+    }
+    
+    var totalDaysRequired: Int {
+        return currentStatus.duration.daysCount
+    }
+    
+    func checkGoalCompletion() {
+        if currentStatus.daysLearned >= totalDaysRequired {
+            isGoalCompleted = true
+        } else {
+            isGoalCompleted = false
+        }
+    }
+    
+    func resetGoalSame() {
+        let subject = currentStatus.subject
+        let duration = currentStatus.duration
+        
+        currentStatus = LearningStatus(subject: subject, duration: duration)
+        isGoalCompleted = false
+    }
+    
     // --- A. منطق التاريخ والتنقل ---
     
     func updateWeek(for date: Date) {
-        // يحسب الأيام من الأحد إلى السبت للأسبوع الذي يضم التاريخ المعطى
         let today = calendar.startOfDay(for: date)
         
-        // البحث عن أول يوم في الأسبوع
         guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)) else { return }
         
-        // بناء مصفوفة الأيام
         currentWeek = (0..<7).compactMap { offset in
             calendar.date(byAdding: .day, value: offset, to: startOfWeek)
         }
     }
-
+    
     func navigateWeek(by value: Int) {
-        // ينتقل للأسبوع التالي أو السابق
         guard let newDate = calendar.date(byAdding: .weekOfYear, value: value, to: selectedDate) else { return }
         selectedDate = newDate
         updateWeek(for: newDate)
     }
+    
 
-    // --- B. منطق القيود اليومية والتجميد ---
+    func canLog(for date: Date) -> Bool {
+        let selectedDay = calendar.startOfDay(for: date)
+        
+
+        // 2. لا يمكن التسجيل لليوم إذا كان مسجلاً مسبقاً.
+        guard selectedDateStatus(for: date) == .none else {
+            return false
+        }
+        
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: selectedDay) else {
+            return true
+        }
+        
+        let yesterdayStatus = selectedDateStatus(for: yesterday)
+        
+        if yesterdayStatus == .none {
+            return currentStatus.loggedStatus.isEmpty
+        }
+        
+        // إذا كان يوم أمس مسجلاً، يمكن التسجيل لليوم المحدد (سواء كان ماضياً أو مستقبلاً).
+        return true
+    }    // --- B. منطق القيود اليومية والتجميد ---
     
     var freezesRemaining: Int {
         return currentStatus.duration.maxFreezes - currentStatus.freezesUsed
     }
     
-    // خاصية محسوبة: هل تم تسجيل تفاعل اليوم (تعلم أو تجميد)؟
     var hasInteractedToday: Bool {
         guard let lastDate = currentStatus.lastInteractionDate else {
             return false
         }
         return Calendar.current.isDateInToday(lastDate)
     }
-    var selectedDateStatus: LogType {
-            let dayStart = calendar.startOfDay(for: selectedDate)
-            return currentStatus.loggedStatus.first { calendar.isDate($0.key, inSameDayAs: dayStart) }?.value ?? .none
-        }
-
-    // تحديث حالة زر "تعلم"
+    
     var isLearnButtonEnabled: Bool {
-        // 1. يجب ألا يكون قد تم التفاعل اليوم
-        guard selectedDateStatus == .none else { return false }
-        // 2. يجب أن تكون الأيام المتعلمة أقل من إجمالي المدة
-        let totalDays: Int = currentStatus.duration == .week ? 7 : (currentStatus.duration == .month ? 30 : 365)
+        guard canLog(for: selectedDate) else { return false }
+        let totalDays = currentStatus.duration.daysCount
         return currentStatus.daysLearned < totalDays
-        
     }
     
-    // تحديث حالة زر "تجميد"
     var isFreezeButtonEnabled: Bool {
-        // 1. يجب ألا يكون قد تم التفاعل اليوم
-        guard selectedDateStatus == .none else { return false }
-        // 2. يجب أن يكون هناك رصيد تجميد متبقي
+        guard canLog(for: selectedDate) else { return false }
         return freezesRemaining > 0
     }
-
-    // تعديل دالة logAsLearned
+    
     func logAsLearned() {
         guard isLearnButtonEnabled else { return }
         
         currentStatus.daysLearned += 1
-        currentStatus.lastInteractionDate = Date() // تسجيل تاريخ التفاعل
+        currentStatus.lastInteractionDate = Date()
         currentStatus.loggedStatus[calendar.startOfDay(for: selectedDate)] = .learned
         print("Logged as Learned for date: \(selectedDate). Total days: \(currentStatus.daysLearned)")
+        checkGoalCompletion()
     }
-
-    // تعديل دالة logAsFreezed
+    
     func logAsFreezed() {
         guard isFreezeButtonEnabled else { return }
         
         currentStatus.freezesUsed += 1
         currentStatus.daysFreezed += 1
-        currentStatus.lastInteractionDate = Date() // تسجيل تاريخ التفاعل
+        currentStatus.lastInteractionDate = Date()
         currentStatus.loggedStatus[calendar.startOfDay(for: selectedDate)] = .freezed
         print("Logged as Freezed for date: \(selectedDate). Freezes left: \(freezesRemaining)")
+    }
+    func getDates(for month: Date) -> [Date] {
+        // نستخدم viewModel.calendar للحصول على المدى
+        guard let range = calendar.range(of: .day, in: .month, for: month) else { return [] }
+        let numDays = range.count
+        
+        let components = calendar.dateComponents([.year, .month], from: month)
+        
+        var dates: [Date] = []
+        for day in 1...numDays {
+            var dateComponents = components
+            dateComponents.day = day
+            if let date = calendar.date(from: dateComponents) {
+                dates.append(date)
+            }
+        }
+        return dates
     }
 }

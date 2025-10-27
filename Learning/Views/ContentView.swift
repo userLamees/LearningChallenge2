@@ -8,25 +8,29 @@
 import SwiftUI
 import Foundation // مطلوب لـ ContentViewModel
 
-struct ContentView: View {
+struct GoalManagementView: View {
     
     @StateObject private var viewModel = ContentViewModel()
     @FocusState private var focused: Bool
-    
+    @Environment(\.dismiss) var dismiss
     let primaryColor = Color.orange // استخدمنا لون ثابت بدلاً من "StreakColor"
     let unselectedDarkColor = Color(red: 0.1, green: 0.1, blue: 0.1)
     
+    init(initialSubject: String, initialDuration: LearningDuration) {
+        _viewModel = StateObject(wrappedValue: ContentViewModel(
+            initialSubject: initialSubject,
+            initialDuration: initialDuration
+        ))
+    }
     var body: some View {
         
         NavigationStack {
             
             ZStack {
-                Color.black.edgesIgnoringSafeArea(.all)
-                    .preferredColorScheme(.dark)
+
                 
                 VStack(alignment: .center, spacing: 10) {
                     
-                    // ... (الجزء A: الأيقونة)
                     ZStack {
                         Circle()
                             .fill(unselectedDarkColor)
@@ -88,7 +92,6 @@ struct ContentView: View {
                     HStack {
                         Spacer()
                         
-                        // 🚨 الحل: تمرير البيانات مباشرة إلى init() الجديد لـ MainPageView 🚨
                         NavigationLink(destination:
                             MainPageView(
                                 subject: viewModel.subjectToLearn,
@@ -115,9 +118,17 @@ struct ContentView: View {
     }
 }
 
-// Preview Provider
-struct ContentView_Previews: PreviewProvider {
+struct GoalManagementView_Previews: PreviewProvider {
+    // 127
     static var previews: some View {
-        ContentView()
+        // 128
+        GoalManagementView(
+            // يجب وضع قيم افتراضية للمتغيرات التي يستقبلها View
+            initialSubject: "",
+            // يجب استخدام اسم الـ Enum الصحيح (LearningDuration)
+            initialDuration: LearningDuration.week
+            
+            
+        )
     }
 }
